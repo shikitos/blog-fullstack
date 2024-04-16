@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output = "generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  name        String?
+  password    String
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+  posts       Post[]
+  postLikes   PostLike[]
+  postComment PostComment[]
+  profile     UserProfile?  @relation(fields: [id], references: [id])
+  followedBy  UserFollow[]  @relation("follower")
+  following   UserFollow[]  @relation("following")
+
+  @@map("users")
+}
+
+model UserProfile {
+  id        String    @id @default(cuid())
+  photo     String?
+  bio       String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  user      User[]
+
+  @@map("user_profiles")
+}
+
+model UserSettings {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  theme     String?
+  language  String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("user_settings")
+}
+
+model Post {
+  id          String        @id @default(cuid())
+  title       String
+  content     String
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+  author      User          @relation(fields: [authorId], references: [id])
+  authorId    String        @map("author_id")
+  likes       PostLike[]
+  status      PostStatuses  @default(DRAFT)
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  categoryId  String?       @map("category_id")
+  PostComment PostComment[]
+  PostTag     PostTag[]
+
+  @@map("posts")
+}
+
+model PostComment {
+  id        String    @id @default(cuid())
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String    @map("author_id")
+  post      Post      @relation(fields: [postId], references: [id])
+  postId    String    @map("post_id")
+
+  @@map("post_comments")
+}
+
+model PostLike {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String    @map("author_id")
+  post      Post      @relation(fields: [postId], references: [id])
+  postId    String    @map("post_id")
+
+  @@unique([authorId, postId])
+  @@map("post_likes")
+}
+
+enum PostStatuses {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Tag {
+  id    String    @id @default(cuid())
+  name  String    @unique
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model PostTag {
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String @map("post_id")
+  tag    Tag    @relation(fields: [tagId], references: [id])
+  tagId  String @map("tag_id")
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  posts Post[]
+
+  @@map("categories")
+}
+
+model UserFollow {
+  follower    User   @relation("follower", fields: [followerId], references: [id])
+  followerId  String @map("follower_id")
+  following   User   @relation("following", fields: [followingId], references: [id])
+  followingId String @map("following_id")
+
+  @@id([followerId, followingId])
+  @@map("follows")
+}

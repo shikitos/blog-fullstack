@@ -20,19 +20,12 @@ services:
             - 4200:4200
         depends_on:
             - db
-        volumes:
-            - ./backend:/usr/src/app
-            - /usr/src/app/node_modules
 
     frontend:
         build: ./frontend
         ports:
             - 3000:3000
         container_name: frontend
-        volumes:
-            - ./frontend:/src/app
-            - ./frontend/node_modules
-            - ./frontend/.next
 
     pgadmin:
         image: dpage/pgadmin4
@@ -45,6 +38,7 @@ services:
             - '5050:80'
         depends_on:
             - db
+
 
 volumes:
     postgres:
